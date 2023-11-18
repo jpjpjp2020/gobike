@@ -28,7 +28,7 @@ func main() {
 	startTime := time.Now()
 
 	// Call your helper function with mock data
-	schedule := generateSchedule(mockData, startTime)
+	schedule := generate_sessions_stack(mockData, startTime)
 
 	// Manual output test
 	fmt.Println("Generated Schedule:", schedule)
