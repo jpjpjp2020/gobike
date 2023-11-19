@@ -20,20 +20,36 @@ func main() {
 	mockData := DashboardData{
 		SessionDuration: 30,
 		StartDelay:      5,
-		Mode:            "Emergency",
+		Mode:            "Busy",
 		EpExercises:     []string{"brake", "swerve_left", "swerve_right"},
 	}
 
-	// session start
+	// time now as constant to generate timestamps
 	startTime := time.Now()
-
-	// Call your helper function with mock data
-	schedule := generate_sessions_stack(mockData, startTime)
+	sessionStack := generateSessionStack(mockData, startTime)
 
 	// Manual output test
-	fmt.Println("Generated Schedule:", schedule)
+	fmt.Println("Generated Schedule:", sessionStack)
 
 }
+
+/*
+
+type DashboardData struct {
+    SessionDuration int      `json:"session_duration" validate:"required,min=1,max=60"`
+    StartDelay      int      `json:"start_delay" validate:"required,min=0,max=15"`
+    Mode            string   `json:"mode" validate:"required,oneof=Busy Surprise"`
+    EpExercises     []string `json:"ep_exercises" validate:"required,dive,oneof=brake swerve_left swerve_right"`
+}
+
+// Validate function
+func (d DashboardData) Validate() error {
+    // validation library or custom logic
+    return nil // or an error if validation fails
+}
+
+
+*/
 
 // data traffic example
 

@@ -10,7 +10,7 @@ type Stack struct {
 	PlayAt   time.Time `json:"play_at"`
 }
 
-func generate_sessions_stack(data DashboardData, startTime time.Time) []Stack {
+func generateSessionStack(data DashboardData, startTime time.Time) []Stack {
 
 	// custom slice of filenames and playtimes
 	var sessionStack []Stack
@@ -24,14 +24,27 @@ func generate_sessions_stack(data DashboardData, startTime time.Time) []Stack {
 		"swerve_left":  "swerve_left.mp3",
 	}
 
-	// Likely need to reorder this shuEx usage and run data through all helper funcs before using in GSS - especially in the for loop
-	shuEx := stack_tasks(data.EpExercises)
+	var taskDelays []int
 
-	for _, exercise := range shuEx {
-		sessionStack = append(sessionStack, Stack{
-			FileName: audioActions[exercise],
-			PlayAt:   timeLogic, // define in funcs
-		})
+	if data.Mode == "Busy" {
+
+		taskDelays = busyModeTimingStack(data.StartDelay, data.SessionDuration)
+
+	} else if data.Mode == "Surprise" {
+
+		taskDelays = surpriseModeTimingStack(data.StartDelay, data.SessionDuration)
+
+	}
+
+	shuEx := stackTasks(data.EpExercises)
+
+	for i, exercise := range shuEx {
+		if i < len(taskDelays) {
+			sessionStack = append(sessionStack, Stack{
+				FileName: audioActions[exercise],
+				PlayAt:   startTime.Add(time.Minute * time.Duration(taskDelays[i])),
+			})
+		}
 	}
 
 	return sessionStack
@@ -40,7 +53,7 @@ func generate_sessions_stack(data DashboardData, startTime time.Time) []Stack {
 
 // call explictly what you need
 // This should work with emergency tasks
-func stack_tasks(exercises []string) []string {
+func stackTasks(exercises []string) []string {
 
 	src := rand.NewSource(time.Now().UnixNano())
 	rnd := rand.New(src)
@@ -90,40 +103,67 @@ func stack_tasks(exercises []string) []string {
 
 }
 
-func busy_mode_timing_stack() {
+func busyModeTimingStack(startDelay, sessionDuration int) []int {
+	leg1, leg2, leg3 := divideIntoLegs(sessionDuration)
+	taskDelays := make([]int, 0, 9)
 
+	taskDelays = append(taskDelays, getRandomFromLeg(leg1, 3)...)
+	taskDelays = append(taskDelays, getRandomFromLeg(leg2, 3)...)
+	taskDelays = append(taskDelays, getRandomFromLeg(leg3, 3)...)
+
+	// Take start delay into account per play
+	for i := range taskDelays {
+		taskDelays[i] += startDelay
+	}
+
+	return taskDelays
 }
 
-func surprise_mode_timing_stack() {
+func surpriseModeTimingStack(startDelay, sessionDuration int) []int {
+	leg1, leg2, leg3 := divideIntoLegs(sessionDuration)
 
+	task1Delay := startDelay + getRandomFromLeg(leg1, 1)[0]
+	task2Delay := startDelay + getRandomFromLeg(leg2, 1)[0]
+	task3Delay := startDelay + getRandomFromLeg(leg3, 1)[0]
+
+	return []int{task1Delay, task2Delay, task3Delay}
 }
 
-func divide_into_legs() {
+func divideIntoLegs(sessionDuration int) ([]int, []int, []int) {
+	var leg1, leg2, leg3 []int
+	legSize := sessionDuration / 3
 
+	for i := 1; i < sessionDuration; i++ {
+		if i <= legSize {
+			leg1 = append(leg1, i)
+		} else if i <= 2*legSize {
+			leg2 = append(leg2, i)
+		} else {
+			leg3 = append(leg3, i)
+		}
+	}
+
+	return leg1, leg2, leg3
 }
 
-func get_random_from_leg() {
+func getRandomFromLeg(leg []int, count int) []int {
+	rnd := rand.New(rand.NewSource(time.Now().UnixNano()))
+	randIndices := rnd.Perm(len(leg))
 
+	var randomMinutes []int
+	for i := 0; i < count; i++ {
+		randomMinutes = append(randomMinutes, leg[randIndices[i]])
+	}
+
+	return randomMinutes
 }
 
 /*
 
-NEED:
-
-timeLogic
-
-// JSON incoming mock
-type DashboardData struct {
-	SessionDuration int      `json:"session_duration"`
-	StartDelay      int      `json:"start_delay"`
-	Mode            string   `json:"mode"`
-	EpExercises     []string `json:"ep_exercises"`
-}
-
 mockData := DashboardData{
 	SessionDuration: 30,
 	StartDelay:      5,
-	Mode:            "Emergency",
+	Mode:            "Busy",
 	EpExercises:     []string{"brake", "swerve_left", "swerve_right"},
 }
 
