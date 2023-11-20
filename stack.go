@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"math/rand"
 	"sort"
 	"time"
@@ -27,9 +26,6 @@ func generateSessionStack(data DashboardData, startTime time.Time) []Stack {
 	}
 
 	var fTaskDelays []int
-	var shuEx []string
-	var shuEx2 []string
-
 	if data.Mode == "Busy" {
 
 		fTaskDelays = busyModeTimingStack(data.StartDelay, data.SessionDuration)
@@ -67,11 +63,6 @@ func generateSessionStack(data DashboardData, startTime time.Time) []Stack {
 
 	}
 
-	fmt.Println(shuEx) // TRACE:
-	fmt.Println(shuEx2)
-
-	fmt.Println("fTaskDelays:") // TRACE:
-	fmt.Println(fTaskDelays)    // TRACE:
 	return sessionStack
 
 }
@@ -142,7 +133,6 @@ func busyModeTimingStack(startDelay, sessionDuration int) []int {
 	}
 
 	sort.Ints(taskDelays)
-	fmt.Println(taskDelays) // TRACE: 9 NOW SORTED INTS returned
 	return taskDelays
 }
 
@@ -153,7 +143,6 @@ func surpriseModeTimingStack(startDelay, sessionDuration int) []int {
 	task2Delay := startDelay + getRandomFromLeg(leg2, 1)[0]
 	task3Delay := startDelay + getRandomFromLeg(leg3, 1)[0]
 
-	fmt.Println([]int{task1Delay, task2Delay, task3Delay}) // TRACE: 3 minute ints returned - OK, ALSO sorted, AS RANGE IN LEG INCREASES
 	return []int{task1Delay, task2Delay, task3Delay}
 }
 
@@ -185,14 +174,3 @@ func getRandomFromLeg(leg []int, count int) []int {
 
 	return randomMinutes
 }
-
-/*
-
-mockData := DashboardData{
-	SessionDuration: 30,
-	StartDelay:      5,
-	Mode:            "Busy",
-	EpExercises:     []string{"brake", "swerve_left", "swerve_right"},
-}
-
-*/
