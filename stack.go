@@ -1,7 +1,9 @@
 package main
 
 import (
+	"fmt"
 	"math/rand"
+	"sort"
 	"time"
 )
 
@@ -24,29 +26,52 @@ func generateSessionStack(data DashboardData, startTime time.Time) []Stack {
 		"swerve_left":  "swerve_left.mp3",
 	}
 
-	var taskDelays []int
+	var fTaskDelays []int
+	var shuEx []string
+	var shuEx2 []string
 
 	if data.Mode == "Busy" {
 
-		taskDelays = busyModeTimingStack(data.StartDelay, data.SessionDuration)
+		fTaskDelays = busyModeTimingStack(data.StartDelay, data.SessionDuration)
+		shuEx := stackTasks(data.EpExercises)
+
+		for len(shuEx) < len(fTaskDelays) {
+			shuEx = append(shuEx, stackTasks(data.EpExercises)...)
+		}
+
+		rnd := rand.New(rand.NewSource(time.Now().UnixNano()))
+		rnd.Shuffle(len(shuEx), func(i, j int) { shuEx[i], shuEx[j] = shuEx[j], shuEx[i] })
+
+		for i, exercise := range shuEx {
+			if i < len(fTaskDelays) {
+				sessionStack = append(sessionStack, Stack{
+					FileName: audioActions[exercise],
+					PlayAt:   startTime.Add(time.Minute * time.Duration(fTaskDelays[i])),
+				})
+			}
+		}
 
 	} else if data.Mode == "Surprise" {
 
-		taskDelays = surpriseModeTimingStack(data.StartDelay, data.SessionDuration)
+		fTaskDelays = surpriseModeTimingStack(data.StartDelay, data.SessionDuration)
+		shuEx2 := stackTasks(data.EpExercises)
 
-	}
-
-	shuEx := stackTasks(data.EpExercises)
-
-	for i, exercise := range shuEx {
-		if i < len(taskDelays) {
-			sessionStack = append(sessionStack, Stack{
-				FileName: audioActions[exercise],
-				PlayAt:   startTime.Add(time.Minute * time.Duration(taskDelays[i])),
-			})
+		for i, exercise := range shuEx2 {
+			if i < len(fTaskDelays) {
+				sessionStack = append(sessionStack, Stack{
+					FileName: audioActions[exercise],
+					PlayAt:   startTime.Add(time.Minute * time.Duration(fTaskDelays[i])),
+				})
+			}
 		}
+
 	}
 
+	fmt.Println(shuEx) // TRACE:
+	fmt.Println(shuEx2)
+
+	fmt.Println("fTaskDelays:") // TRACE:
+	fmt.Println(fTaskDelays)    // TRACE:
 	return sessionStack
 
 }
@@ -116,6 +141,8 @@ func busyModeTimingStack(startDelay, sessionDuration int) []int {
 		taskDelays[i] += startDelay
 	}
 
+	sort.Ints(taskDelays)
+	fmt.Println(taskDelays) // TRACE: 9 NOW SORTED INTS returned
 	return taskDelays
 }
 
@@ -126,6 +153,7 @@ func surpriseModeTimingStack(startDelay, sessionDuration int) []int {
 	task2Delay := startDelay + getRandomFromLeg(leg2, 1)[0]
 	task3Delay := startDelay + getRandomFromLeg(leg3, 1)[0]
 
+	fmt.Println([]int{task1Delay, task2Delay, task3Delay}) // TRACE: 3 minute ints returned - OK, ALSO sorted, AS RANGE IN LEG INCREASES
 	return []int{task1Delay, task2Delay, task3Delay}
 }
 

@@ -20,7 +20,7 @@ func main() {
 	mockData := DashboardData{
 		SessionDuration: 30,
 		StartDelay:      5,
-		Mode:            "Busy",
+		Mode:            "Surprise",
 		EpExercises:     []string{"brake", "swerve_left", "swerve_right"},
 	}
 
